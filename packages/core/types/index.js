@@ -19,24 +19,25 @@ type Semver = string;
 type SemverRange = string;
 export type ModuleSpecifier = string;
 
+export type GlobMap<T> = {[Glob]: T};
 export type ParcelConfig = {
-  extends: Array<PackageName | FilePath>,
-  resolvers: Array<PackageName>,
-  transforms: {
+  extends?: PackageName | FilePath | Array<PackageName | FilePath>,
+  resolvers?: Array<PackageName>,
+  transforms?: {
     [Glob]: Array<PackageName>
   },
-  loaders: {
+  loaders?: {
     [Glob]: PackageName
   },
-  bundler: PackageName,
-  namers: Array<PackageName>,
-  packagers: {
+  bundler?: PackageName,
+  namers?: Array<PackageName>,
+  packagers?: {
     [Glob]: PackageName
   },
-  optimizers: {
+  optimizers?: {
     [Glob]: Array<PackageName>
   },
-  reporters: Array<PackageName>
+  reporters?: Array<PackageName>
 };
 
 export type Engines = {
@@ -131,7 +132,7 @@ export type ParcelOptions = {
 export type ServerOptions = {
   host?: string,
   port?: number,
-  https?: HTTPSOptions | boolean,
+  https?: HTTPSOptions | boolean
 };
 
 export type HTTPSOptions = {

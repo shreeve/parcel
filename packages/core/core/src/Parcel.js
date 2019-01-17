@@ -22,6 +22,7 @@ import getRootDir from '@parcel/utils/getRootDir';
 import loadEnv from './loadEnv';
 import path from 'path';
 import Cache from '@parcel/cache';
+import ConfigResolver from './ConfigResolver';
 
 // TODO: use custom config if present
 const defaultConfig = require('@parcel/config-default');
@@ -71,21 +72,6 @@ export default class Parcel {
     this.watcher = cliOpts.watch ? new Watcher() : null;
     this.queue = new PromiseQueue();
 
-    let config = new Config(
-      defaultConfig,
-      require.resolve('@parcel/config-default')
-    );
-    this.resolverRunner = new ResolverRunner({
-      config,
-      cliOpts,
-      rootDir: this.rootDir
-    });
-    this.bundlerRunner = new BundlerRunner({
-      config,
-      cliOpts,
-      rootDir: this.rootDir
-    });
-
     this.targetResolver = new TargetResolver();
     this.targets = [];
   }
@@ -94,16 +80,33 @@ export default class Parcel {
     let controller = new AbortController();
     let signal = controller.signal;
 
-    Cache.createCacheDir(this.options.cliOpts.cacheDir);
+    await Cache.createCacheDir(this.options.cliOpts.cacheDir);
 
     if (!this.options.env) {
       await loadEnv(path.join(this.rootDir, 'index'));
       this.options.env = process.env;
     }
 
+    let configResolver = new ConfigResolver();
+    let config = await configResolver.resolve(this.rootDir);
+    if (!config) {
+      return;
+    }
+
+    this.resolverRunner = new ResolverRunner({
+      config,
+      cliOpts: this.options.cliOpts,
+      rootDir: this.rootDir
+    });
+    this.bundlerRunner = new BundlerRunner({
+      config,
+      cliOpts: this.options.cliOpts,
+      rootDir: this.rootDir
+    });
+
     this.farm = await WorkerFarm.getShared(
       {
-        parcelConfig: defaultConfig,
+        config,
         cliOpts: this.options.cliOpts,
         env: this.options.env
       },
