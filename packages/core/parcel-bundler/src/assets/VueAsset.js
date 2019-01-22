@@ -17,6 +17,17 @@ class VueAsset extends Asset {
     );
     this.vue = await localRequire('@vue/component-compiler-utils', this.name);
 
+    // add support for vue-terse syntax
+    const regx = /(?<=\n|^)(pug|coffee|stylus)(?:.*\n)([\s\S]*?)(\n(?=\S)|$)/g;
+    const type = {
+      pug: 'template',
+      coffee: 'script',
+      stylus: 'style'
+    };
+    code = code.replace(regx, function(...hits) {
+      return `<${type[hits[1]]} lang='${hits[1]}'>\n${hits[2]}</${type[hits[1]]}>\n`;
+    });
+
     return this.vue.parse({
       source: code,
       needMap: this.options.sourceMaps,
